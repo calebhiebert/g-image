@@ -5,11 +5,10 @@ import (
 	"encoding/hex"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	minio "github.com/minio/minio-go"
 	"github.com/rs/xid"
 )
 
@@ -40,15 +39,29 @@ func putFile(c *gin.Context) {
 		Sha256:   hash,
 	}
 
-	writeEntry(fileInfo)
+	err = uploadFile(&fileInfo, file)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	err = writeEntry(fileInfo)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err,
+		})
+		return
+	}
 
 	c.JSON(200, fileInfo)
 }
 
 func saveFile(file *multipart.FileHeader, id string) (string, error) {
-	ensureDirectory(DataDir)
+	ensureDirectory(config.DataDir)
 
-	f, err := os.OpenFile(DataDir+id, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(config.DataDir+id, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return "", err
 	}
@@ -62,11 +75,7 @@ func saveFile(file *multipart.FileHeader, id string) (string, error) {
 
 	h := sha256.New()
 
-	if _, err := io.Copy(h, openedFile); err != nil {
-		return "", err
-	}
-
-	if _, err := io.Copy(f, openedFile); err != nil {
+	if _, err := io.Copy(f, io.TeeReader(openedFile, h)); err != nil {
 		return "", err
 	}
 
@@ -74,7 +83,7 @@ func saveFile(file *multipart.FileHeader, id string) (string, error) {
 }
 
 func loadFile(id string) (*os.File, error) {
-	data, err := os.Open(DataDir + id)
+	data, err := os.Open(config.DataDir + id)
 	if err != nil {
 		panic(err)
 	}
@@ -84,20 +93,82 @@ func loadFile(id string) (*os.File, error) {
 
 func ensureDirectory(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, os.ModeDir)
+		os.Mkdir(path, 0755)
 	}
 }
 
-func uploadFile(details *Entry, file *multipart.FileHeader) {
-	client := &http.Client{
-		Timeout: time.Second * 10,
+func uploadFile(details *Entry, file *multipart.FileHeader) error {
+
+	client, err := getMinioClient()
+	if err != nil {
+		return err
 	}
 
 	openedFile, err := file.Open()
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer openedFile.Close()
 
-	// TODO Upload
+	err = ensureBucket(config.BucketName)
+	if err != nil {
+		return err
+	}
+
+	client.PutObject(config.BucketName, details.ID, openedFile, details.Size, minio.PutObjectOptions{
+		ContentType: details.Mime,
+	})
+
+	return nil
+}
+
+func downloadFile(id string) error {
+	client, err := getMinioClient()
+	if err != nil {
+		return err
+	}
+
+	obj, err := client.GetObject(config.BucketName, id, minio.GetObjectOptions{})
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(config.DataDir+id, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	io.Copy(f, obj)
+
+	return nil
+}
+
+func ensureBucket(bucketName string) error {
+	client, err := getMinioClient()
+	if err != nil {
+		return err
+	}
+
+	exists, err := client.BucketExists(bucketName)
+	if err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
+
+	return client.MakeBucket(bucketName, "nyc3")
+}
+
+func getMinioClient() (*minio.Client, error) {
+	endpoint := config.S3Endpoint
+	accessKeyID := config.S3AccessKey
+	secretAccessKey := config.S3Secret
+	useSSL := config.S3SSL
+
+	client, err := minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
