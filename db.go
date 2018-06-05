@@ -5,11 +5,13 @@ import (
 	"io/ioutil"
 )
 
+// Entry a file
 type Entry struct {
-	ID       string `json: id`
-	Filename string `json: filename`
-	Mime     string `json: mime`
-	Size     int64  `json: size`
+	ID       string `json:"id"`
+	Filename string `json:"filename"`
+	Mime     string `json:"mime"`
+	Size     int64  `json:"size"`
+	Sha256   string `json:"hash"`
 }
 
 func writeEntry(entry Entry) error {

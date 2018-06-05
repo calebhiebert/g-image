@@ -1,18 +1,21 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 )
 
-func handlePOST(c *gin.Context) {
+func putFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
-		panic(err)
 		c.JSON(500, gin.H{
 			"error": err,
 		})
@@ -21,48 +24,59 @@ func handlePOST(c *gin.Context) {
 
 	id := xid.New().String()
 
-	saveFile(file, id)
+	hash, err := saveFile(file, id)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err,
+		})
+		return
+	}
 
-	writeEntry(Entry{
+	fileInfo := Entry{
 		ID:       id,
 		Filename: file.Filename,
 		Mime:     file.Header.Get("Content-Type"),
 		Size:     file.Size,
-	})
+		Sha256:   hash,
+	}
 
-	c.JSON(200, gin.H{
-		"id":       id,
-		"filename": file.Filename,
-		"mime":     file.Header.Get("Content-Type"),
-		"size":     file.Size,
-	})
+	writeEntry(fileInfo)
+
+	c.JSON(200, fileInfo)
 }
 
-func saveFile(file *multipart.FileHeader, id string) {
+func saveFile(file *multipart.FileHeader, id string) (string, error) {
 	ensureDirectory(DataDir)
 
 	f, err := os.OpenFile(DataDir+id, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		panic(err)
-		return
+		return "", err
 	}
 	defer f.Close()
 
 	openedFile, err := file.Open()
 	if err != nil {
-		panic(err)
-		return
+		return "", err
 	}
 	defer openedFile.Close()
 
-	io.Copy(f, openedFile)
+	h := sha256.New()
+
+	if _, err := io.Copy(h, openedFile); err != nil {
+		return "", err
+	}
+
+	if _, err := io.Copy(f, openedFile); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func loadFile(id string) (*os.File, error) {
 	data, err := os.Open(DataDir + id)
 	if err != nil {
 		panic(err)
-		return nil, err
 	}
 
 	return data, nil
@@ -72,4 +86,18 @@ func ensureDirectory(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.Mkdir(path, os.ModeDir)
 	}
+}
+
+func uploadFile(details *Entry, file *multipart.FileHeader) {
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	openedFile, err := file.Open()
+	if err != nil {
+		panic(err)
+	}
+	defer openedFile.Close()
+
+	// TODO Upload
 }
