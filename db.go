@@ -16,7 +16,7 @@ type Entry struct {
 
 // APIKey a single api key
 type APIKey struct {
-	Key    string `json:"key"`
+	Key    string `json:"key" gorm:"type:CHAR(20);UNIQUE_INDEX;PRIMARY_KEY"`
 	Create bool   `json:"create"`
 	Read   bool   `json:"read"`
 	Update bool   `json:"update"`
@@ -52,4 +52,12 @@ func readEntry(id string) (Entry, error) {
 	}
 
 	return entry, nil
+}
+
+func deleteEntry(id string) error {
+	if err := db.Delete(Entry{ID: id}).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

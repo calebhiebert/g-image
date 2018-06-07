@@ -30,18 +30,13 @@ func getFile(c *gin.Context) {
 	}
 	defer file.Close()
 
-	println(file.Name())
-
 	c.Writer.Header().Set("Content-Type", data.Mime)
 	c.Writer.Header().Set("Content-Length", strconv.FormatInt(data.Size, 10))
-	bytes, err := io.Copy(c.Writer, file)
+	_, err = io.Copy(c.Writer, file)
 
 	if err != nil {
 		println(err)
-	} else {
-		println("wrote bytes " + strconv.FormatInt(bytes, 10))
 	}
-
 }
 
 func loadObjectFile(ID string) (*os.File, error) {
@@ -53,9 +48,9 @@ func loadObjectFile(ID string) (*os.File, error) {
 				return nil, err
 			}
 			return loadObjectFile(ID)
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 	return file, nil
 }

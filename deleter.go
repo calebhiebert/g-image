@@ -10,7 +10,6 @@ func deleteFile(c *gin.Context) {
 	id := c.Param("id")
 
 	os.Remove(config.DataDir + id)
-	os.Remove(config.DataDir + id + ".json")
 
 	client, err := getMinioClient()
 	if err != nil {
@@ -26,4 +25,6 @@ func deleteFile(c *gin.Context) {
 			"error": err.Error(),
 		})
 	}
+
+	deleteEntry(id)
 }
