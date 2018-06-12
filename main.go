@@ -23,7 +23,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		println("Could not load .env file. Probably because there isn't one, and that is totally okay")
 	}
 
 	err = env.Parse(&config)
@@ -38,6 +38,8 @@ func main() {
 	defer db.Close()
 
 	r := gin.Default()
+	r.POST("/apikey", createAPIKey)
+
 	r.GET("/:id", getFile)
 	r.POST("/upload", putFile)
 	r.DELETE("/:id", deleteFile)
