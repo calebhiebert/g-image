@@ -45,8 +45,6 @@ func keyChecker() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		apiKey := c.Query("key")
 
-		println("api key is" + apiKey)
-
 		var dbKey APIKey
 
 		if err := db.First(&dbKey, APIKey{Key: apiKey}).Error; err != nil {

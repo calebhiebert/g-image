@@ -7,11 +7,11 @@ import (
 
 // Entry a file
 type Entry struct {
-	ID       string `json:"id" gorm:"type:CHAR(20);UNIQUE_INDEX;PRIMARY_KEY"`
-	Filename string `json:"filename"`
-	Mime     string `json:"mime"`
-	Size     int64  `json:"size"`
-	Sha256   string `json:"hash"`
+	ID       string `json:"id" gorm:"type:CHAR(20);UNIQUE_INDEX;PRIMARY_KEY" validate:"required"`
+	Filename string `json:"filename" validate:"required"`
+	Mime     string `json:"mime" validate:"required"`
+	Size     int64  `json:"size" validate:"required"`
+	Sha256   string `json:"hash" validate:"required"`
 }
 
 // APIKey a single api key

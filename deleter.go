@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,11 @@ func deleteFile(c *gin.Context) {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
 		})
+	}
+
+	err = webhookDelete(id)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	deleteEntry(id)

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -59,6 +60,11 @@ func putFile(c *gin.Context) {
 			"error": err,
 		})
 		return
+	}
+
+	err = webhookPutInfo(&fileInfo)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	c.JSON(200, fileInfo)

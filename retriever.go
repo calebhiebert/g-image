@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -18,13 +19,28 @@ func getFile(c *gin.Context) {
 		return
 	}
 
+	var data Entry
 	id := c.Param("id")
 
-	data, err := readEntry(id)
+	data, err := webhookGetInfo(id)
 	if err != nil {
+		fmt.Println(err)
+	}
+
+	if data.ID == "" {
+		data, err = readEntry(id)
+		if err != nil {
+			c.JSON(404, gin.H{
+				"error":    "not found",
+				"full_err": err,
+			})
+			return
+		}
+	}
+
+	if data.ID == "" {
 		c.JSON(404, gin.H{
-			"error":    "not found",
-			"full_err": err,
+			"error": "not found",
 		})
 		return
 	}

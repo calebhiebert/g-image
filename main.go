@@ -4,6 +4,7 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	validator "gopkg.in/go-playground/validator.v8"
 )
 
 // Environment app config
@@ -18,9 +19,11 @@ type Environment struct {
 }
 
 var config Environment
+var validate *validator.Validate
 
 func main() {
 	config = Environment{}
+	validate = validator.New(&validator.Config{})
 
 	err := godotenv.Load()
 	if err != nil {
