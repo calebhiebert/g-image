@@ -9,6 +9,15 @@ import (
 )
 
 func getFile(c *gin.Context) {
+	apiKey, _ := c.Get("apikey")
+
+	if !apiKey.(APIKey).Read {
+		c.JSON(401, gin.H{
+			"error": "Missing read permissions",
+		})
+		return
+	}
+
 	id := c.Param("id")
 
 	data, err := readEntry(id)

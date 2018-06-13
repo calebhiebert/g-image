@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"github.com/rs/xid"
 )
 
@@ -16,9 +17,9 @@ type APIKeyArgs struct {
 func createAPIKey(c *gin.Context) {
 	args := APIKeyArgs{}
 
-	err := c.BindJSON(args)
+	err := c.BindJSON(&args)
 	if err != nil {
-		// c.JSON(500, gin.H{"error": err})
+		c.JSON(500, gin.H{"error": err})
 		return
 	}
 
@@ -38,4 +39,26 @@ func createAPIKey(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"key": id.String(),
 	})
+}
+
+func keyChecker() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		apiKey := c.Query("key")
+
+		println("api key is" + apiKey)
+
+		var dbKey APIKey
+
+		if err := db.First(&dbKey, APIKey{Key: apiKey}).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				c.JSON(401, gin.H{"error": "Invalid api key"})
+				return
+			} else {
+				c.JSON(500, gin.H{"error": err})
+			}
+		}
+
+		c.Set("apikey", dbKey)
+		c.Next()
+	}
 }

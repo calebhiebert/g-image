@@ -14,6 +14,7 @@ type Environment struct {
 	S3AccessKey string `env:"S3_ACCESS_KEY"`
 	S3Secret    string `env:"S3_SECRET"`
 	S3SSL       bool   `env:"S3_SSL" envDefault:"false"`
+	WebhookURL  string `env:"WEBHOOK_URL"`
 }
 
 var config Environment
@@ -38,6 +39,8 @@ func main() {
 	defer db.Close()
 
 	r := gin.Default()
+	r.Use(keyChecker())
+
 	r.POST("/apikey", createAPIKey)
 
 	r.GET("/:id", getFile)

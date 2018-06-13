@@ -13,6 +13,12 @@ import (
 )
 
 func putFile(c *gin.Context) {
+	apiKey, _ := c.Get("apikey")
+	if !apiKey.(APIKey).Create {
+		c.JSON(401, gin.H{"error": "Missing create permissions"})
+		return
+	}
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(500, gin.H{

@@ -7,6 +7,12 @@ import (
 )
 
 func deleteFile(c *gin.Context) {
+	apiKey, _ := c.Get("apikey")
+	if !apiKey.(APIKey).Delete {
+		c.JSON(401, gin.H{"error": "Missing delete permissions"})
+		return
+	}
+
 	id := c.Param("id")
 
 	os.Remove(config.DataDir + id)
