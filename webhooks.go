@@ -4,12 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	validator "gopkg.in/go-playground/validator.v8"
 )
 
 func checkWebhookURL() bool {
@@ -42,24 +39,10 @@ func webhookGetInfo(id string) (Entry, error) {
 		return entry, err
 	}
 
-	if err = validate.Struct(Entry{}); err != nil {
-
-		for _, err := range err.(validator.ValidationErrors) {
-
-			fmt.Println(err.NameNamespace)
-			fmt.Println(err.Field)
-			fmt.Println(err.Tag)
-			fmt.Println(err.ActualTag)
-			fmt.Println(err.Kind)
-			fmt.Println(err.Type)
-			fmt.Println(err.Value)
-			fmt.Println(err.Param)
-			fmt.Println()
-		}
-
+	err = entry.Validate()
+	if err != nil {
+		return entry, err
 	}
-
-	fmt.Println("got webhook response", entry)
 
 	return entry, nil
 }

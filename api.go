@@ -51,9 +51,10 @@ func keyChecker() func(c *gin.Context) {
 			if gorm.IsRecordNotFoundError(err) {
 				c.JSON(401, gin.H{"error": "Invalid api key"})
 				return
-			} else {
-				c.JSON(500, gin.H{"error": err})
 			}
+
+			c.JSON(500, gin.H{"error": err})
+			return
 		}
 
 		c.Set("apikey", dbKey)

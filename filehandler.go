@@ -46,13 +46,7 @@ func putFile(c *gin.Context) {
 		Sha256:   hash,
 	}
 
-	err = uploadFile(&fileInfo, file)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err,
-		})
-		return
-	}
+	go doUpload(&fileInfo, file)
 
 	err = writeEntry(fileInfo)
 	if err != nil {
@@ -109,8 +103,18 @@ func ensureDirectory(path string) {
 	}
 }
 
-func uploadFile(details *Entry, file *multipart.FileHeader) error {
+func doUpload(details *Entry, file *multipart.FileHeader) {
+	fmt.Printf("Staring file upload for %s\n", details.Filename)
 
+	err := uploadFile(details, file)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Finished file upload for %s\n", details.Filename)
+}
+
+func uploadFile(details *Entry, file *multipart.FileHeader) error {
 	client, err := getMinioClient()
 	if err != nil {
 		return err
@@ -126,9 +130,12 @@ func uploadFile(details *Entry, file *multipart.FileHeader) error {
 		return err
 	}
 
-	client.PutObject(config.BucketName, details.ID, openedFile, details.Size, minio.PutObjectOptions{
+	_, err = client.PutObject(config.BucketName, details.ID, openedFile, details.Size, minio.PutObjectOptions{
 		ContentType: details.Mime,
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

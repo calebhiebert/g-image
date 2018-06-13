@@ -58,7 +58,6 @@ func getFile(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", data.Mime)
 	c.Writer.Header().Set("Content-Length", strconv.FormatInt(data.Size, 10))
 	_, err = io.Copy(c.Writer, file)
-
 	if err != nil {
 		println(err)
 	}
