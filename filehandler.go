@@ -142,12 +142,7 @@ func uploadFile(details *Entry, file *multipart.FileHeader) error {
 }
 
 func downloadFile(id string) error {
-	client, err := getMinioClient()
-	if err != nil {
-		return err
-	}
-
-	obj, err := client.GetObject(config.BucketName, id, minio.GetObjectOptions{})
+	objectReader, err := getObjectReader(id)
 	if err != nil {
 		return err
 	}
@@ -158,7 +153,7 @@ func downloadFile(id string) error {
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, obj)
+	_, err = io.Copy(f, objectReader)
 	if err != nil {
 		f.Close()
 		os.Remove(config.DataDir + id)
@@ -166,6 +161,20 @@ func downloadFile(id string) error {
 	}
 
 	return nil
+}
+
+func getObjectReader(id string) (io.ReadCloser, error) {
+	client, err := getMinioClient()
+	if err != nil {
+		return nil, err
+	}
+
+	obj, err := client.GetObject(config.BucketName, id, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func ensureBucket(bucketName string) error {

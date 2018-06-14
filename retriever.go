@@ -45,7 +45,7 @@ func getFile(c *gin.Context) {
 		return
 	}
 
-	file, err := loadObjectFile(&data)
+	fileReader, err := loadObjectFile(&data)
 	if err != nil {
 		c.JSON(404, gin.H{
 			"error":    "not found",
@@ -53,14 +53,15 @@ func getFile(c *gin.Context) {
 		})
 		return
 	}
-	defer file.Close()
+	defer fileReader.Close()
 	defer func() {
 		go cacheCheck()
 	}()
 
 	c.Writer.Header().Set("Content-Type", data.Mime)
 	c.Writer.Header().Set("Content-Length", strconv.FormatInt(data.Size, 10))
-	_, err = io.Copy(c.Writer, file)
+	_, err = io.Copy(c.Writer, fileReader)
+
 	if err != nil {
 		println(err)
 	}
@@ -105,33 +106,37 @@ func getFileInfo(c *gin.Context) {
 	c.JSON(200, data)
 }
 
-func loadObjectFile(data *Entry) (*os.File, error) {
-	file, err := os.Open(config.DataDir + data.ID)
-	if err != nil {
-		if config.BucketName != "" {
-			err = downloadFile(data.ID)
-			if err != nil {
-				return nil, err
-			}
-			return loadObjectFile(data)
-		}
-
-		return nil, err
-	}
-
-	stat, err := file.Stat()
-	if err != nil {
-		file.Close()
-		return nil, err
-	}
-
-	if stat.Size() != data.Size {
-		err := os.Remove(config.DataDir + stat.Name())
+func loadObjectFile(data *Entry) (io.ReadCloser, error) {
+	if config.CacheSize == 0 {
+		objectReader, err := getObjectReader(data.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		return loadObjectFile(data)
+		return objectReader, nil
+	}
+
+	stat, err := os.Stat(config.DataDir + data.ID)
+	if err != nil {
+		objectReader, err := getObjectReader(data.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		return objectReader, nil
+	}
+
+	file, err := os.Open(config.DataDir + data.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if stat.Size() != data.Size {
+		file.Close()
+		err := os.Remove(config.DataDir + stat.Name())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return file, nil

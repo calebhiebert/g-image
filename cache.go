@@ -21,9 +21,6 @@ func getCacheContents() ([]os.FileInfo, error) {
 }
 
 func cacheCheck() {
-	fmt.Println("Checking Cache")
-	fmt.Printf("Allowed cache size is %dmb\n", config.CacheSize)
-
 	files, err := getCacheContents()
 	if err != nil {
 		fmt.Println(err)
@@ -32,8 +29,6 @@ func cacheCheck() {
 	var totalCacheSize int64
 	var toDelete []string
 
-	fmt.Printf("Cache contains %d entries\n", len(files))
-
 	for _, file := range files {
 		totalCacheSize += file.Size()
 
@@ -41,8 +36,6 @@ func cacheCheck() {
 			toDelete = append(toDelete, file.Name())
 		}
 	}
-
-	fmt.Printf("Total Cache size: %dmb\n", totalCacheSize/1000000)
 
 	if len(toDelete) > 0 {
 		for _, filePath := range toDelete {
