@@ -10,6 +10,17 @@ A http file management utility
 
 ## Quickstart
 
+### Environment Variables
+
+- `DATA_DIR` The file cache directory (defaults to ./data/)
+- `BUCKET_NAME` S3 Bucket name
+- `S3_ENDPOINT` S3 Endpoint
+- `S3_ACCESS_KEY` S3 Access Key
+- `S3_SECRET` S3 Secret Key
+- `S3_SSL` If S3 should use SSL (default false)
+- `WEBHOOK_URL` Webhook url
+- `CACHE_SIZE` The size of the cache to store locally in mb (default 50)
+
 When starting the program, a master api key will be printed to the console. It will look like this:
 
 ```
@@ -17,6 +28,46 @@ Admin API Key: h~9PjzdKQh3B7Y~S_XtGZrsle8ztfcry4wEH0FcViI5WjIPy
 ```
 
 You can use this api key to make any request.
+
+### Requests
+
+#### Get File
+
+`GET /:id`
+
+Returns a file that matches `id`
+
+#### Get File Info
+
+`GET /:id/info`
+
+Returns info about a file
+
+#### Upload File
+
+`POST /upload`
+
+Accepts only multipart/form-data. The file should be at parameter `file`
+
+Returns file data:
+
+```json
+{
+  "id": "bchaka2md6sdpllvkvl0",
+  "filename": "before-submit.png",
+  "mime": "image/png",
+  "size": 78529,
+  "hash": "493ac2f6d6f009415be5653d8125ef9969379502ddd595e7dde59c22a79b432c"
+}
+```
+
+#### Delete File
+
+`DELETE /:id`
+
+Deletes the file at `id`
+
+Returns a blank 200 upon success
 
 ## Webhooks
 
