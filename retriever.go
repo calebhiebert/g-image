@@ -54,6 +54,9 @@ func getFile(c *gin.Context) {
 		return
 	}
 	defer file.Close()
+	defer func() {
+		go cacheCheck()
+	}()
 
 	c.Writer.Header().Set("Content-Type", data.Mime)
 	c.Writer.Header().Set("Content-Length", strconv.FormatInt(data.Size, 10))

@@ -63,10 +63,22 @@
   revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jkomyno/nanoid"
+  packages = ["."]
+  revision = "30c81465692ea2649a9c2c2b323402d5217285ba"
+
+[[projects]]
   name = "github.com/joho/godotenv"
   packages = ["."]
   revision = "a79fa1e548e2c689c241d10173efd51e5d689d5b"
   version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/matoous/go-nanoid"
+  packages = ["."]
+  revision = "958d370425a1ea42a4dd3c67d15bf02554a16b82"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -182,6 +194,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c70259fe23abf73e3310d6044eab976889b5cc905a9e8fe6e38dfe58fc527859"
+  inputs-digest = "b0e77832c475da4c9132b442c3301ffd91ceadd39b9ce2a9cc246ef5c1f18982"
   solver-name = "gps-cdcl"
   solver-version = 1

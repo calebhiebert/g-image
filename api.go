@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"github.com/rs/xid"
+	"github.com/jkomyno/nanoid"
 )
 
 type APIKeyArgs struct {
@@ -23,10 +25,10 @@ func createAPIKey(c *gin.Context) {
 		return
 	}
 
-	id := xid.New()
+	id, _ := nanoid.Nanoid(48)
 
 	if err = db.Create(APIKey{
-		Key:    id.String(),
+		Key:    id,
 		Create: args.Create,
 		Read:   args.Read,
 		Update: args.Update,
@@ -37,7 +39,7 @@ func createAPIKey(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"key": id.String(),
+		"key": id,
 	})
 }
 
@@ -60,4 +62,32 @@ func keyChecker() func(c *gin.Context) {
 		c.Set("apikey", dbKey)
 		c.Next()
 	}
+}
+
+func getAndPrintAdminKey() error {
+	key := APIKey{}
+
+	if err := db.First(&key, APIKey{Create: true, Read: true, Update: true, Delete: true, Admin: true}).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			id, _ := nanoid.Nanoid(48)
+
+			key = APIKey{
+				Key:    id,
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+				Admin:  true,
+			}
+
+			if err = db.Create(&key).Error; err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	fmt.Printf("Admin API Key: %s\n", key.Key)
+	return nil
 }

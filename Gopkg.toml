@@ -54,9 +54,13 @@
   version = "1.9.1"
 
 [[constraint]]
-  name = "gopkg.in/go-playground/validator.v9"
-  version = "9.17.1"
-
-[[constraint]]
   name = "github.com/go-ozzo/ozzo-validation"
   version = "3.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/matoous/go-nanoid"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jkomyno/nanoid"

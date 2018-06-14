@@ -112,6 +112,7 @@ func doUpload(details *Entry, file *multipart.FileHeader) {
 	}
 
 	fmt.Printf("Finished file upload for %s\n", details.Filename)
+	go cacheCheck()
 }
 
 func uploadFile(details *Entry, file *multipart.FileHeader) error {

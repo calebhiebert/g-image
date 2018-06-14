@@ -25,7 +25,7 @@ func (e Entry) Validate() error {
 
 // APIKey a single api key
 type APIKey struct {
-	Key    string `json:"key" gorm:"type:CHAR(20);UNIQUE_INDEX;PRIMARY_KEY"`
+	Key    string `json:"key" gorm:"type:CHAR(48);UNIQUE_INDEX;PRIMARY_KEY"`
 	Create bool   `json:"create" gorm:"NOT_NULL;DEFAULT:true"`
 	Read   bool   `json:"read"`
 	Update bool   `json:"update"`

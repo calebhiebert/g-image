@@ -16,6 +16,7 @@ type Environment struct {
 	S3Secret    string `env:"S3_SECRET"`
 	S3SSL       bool   `env:"S3_SSL" envDefault:"false"`
 	WebhookURL  string `env:"WEBHOOK_URL"`
+	CacheSize   int64  `env:"CACHE_SIZE" envDefault:"50"` // Cache size in MB
 }
 
 var config Environment
@@ -40,6 +41,9 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+
+	getAndPrintAdminKey()
+	cacheCheck()
 
 	r := gin.Default()
 	r.Use(keyChecker())
