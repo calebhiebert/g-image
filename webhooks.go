@@ -87,7 +87,7 @@ func webhookDelete(id string) error {
 		Timeout: 5 * time.Second,
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, config.WebhookURL, nil)
+	req, err := http.NewRequest(http.MethodDelete, config.WebhookURL+"?id="+id, nil)
 	if err != nil {
 		return err
 	}

@@ -158,7 +158,12 @@ func downloadFile(id string) error {
 	}
 	defer f.Close()
 
-	io.Copy(f, obj)
+	_, err = io.Copy(f, obj)
+	if err != nil {
+		f.Close()
+		os.Remove(config.DataDir + id)
+		return err
+	}
 
 	return nil
 }
