@@ -8,15 +8,23 @@ import (
 	"github.com/jkomyno/nanoid"
 )
 
+// APIKeyArgs json arguments for creating an api key
 type APIKeyArgs struct {
-	Create bool `json:"create"`
-	Read   bool `json:"read"`
-	Update bool `json:"update"`
-	Delete bool `json:"delete"`
-	Admin  bool `json:"admin"`
+	Create    bool `json:"create"`
+	Read      bool `json:"read"`
+	Update    bool `json:"update"`
+	Delete    bool `json:"delete"`
+	Admin     bool `json:"admin"`
+	SizeLimit int  `json:"sizeLimit"`
 }
 
 func createAPIKey(c *gin.Context) {
+	key, _ := c.Get("apikey")
+	if !key.(APIKey).Admin {
+		c.JSON(403, gin.H{"error": "Missing admin permissions"})
+		return
+	}
+
 	args := APIKeyArgs{}
 
 	err := c.BindJSON(&args)
@@ -27,13 +35,20 @@ func createAPIKey(c *gin.Context) {
 
 	id, _ := nanoid.Nanoid(48)
 
+	sizeLimit := 52428800
+
+	if args.SizeLimit > 0 {
+		sizeLimit = args.SizeLimit
+	}
+
 	if err = db.Create(APIKey{
-		Key:    id,
-		Create: args.Create,
-		Read:   args.Read,
-		Update: args.Update,
-		Delete: args.Delete,
-		Admin:  args.Admin,
+		Key:       id,
+		Create:    args.Create,
+		Read:      args.Read,
+		Update:    args.Update,
+		Delete:    args.Delete,
+		Admin:     args.Admin,
+		SizeLimit: sizeLimit,
 	}).Error; err != nil {
 		c.JSON(500, gin.H{"error": err})
 	}
@@ -72,12 +87,13 @@ func getAndPrintAdminKey() error {
 			id, _ := nanoid.Nanoid(48)
 
 			key = APIKey{
-				Key:    id,
-				Create: true,
-				Read:   true,
-				Update: true,
-				Delete: true,
-				Admin:  true,
+				Key:       id,
+				Create:    true,
+				Read:      true,
+				Update:    true,
+				Delete:    true,
+				Admin:     true,
+				SizeLimit: 52428800,
 			}
 
 			if err = db.Create(&key).Error; err != nil {

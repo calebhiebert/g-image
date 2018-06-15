@@ -15,6 +15,7 @@ type Entry struct {
 	Sha256   string `json:"hash"`
 }
 
+// Validate validate an entry struct
 func (e Entry) Validate() error {
 	return validation.ValidateStruct(&e,
 		validation.Field(&e.ID, validation.Required),
@@ -25,12 +26,13 @@ func (e Entry) Validate() error {
 
 // APIKey a single api key
 type APIKey struct {
-	Key    string `json:"key" gorm:"type:CHAR(48);UNIQUE_INDEX;PRIMARY_KEY"`
-	Create bool   `json:"create" gorm:"NOT_NULL;DEFAULT:true"`
-	Read   bool   `json:"read"`
-	Update bool   `json:"update"`
-	Delete bool   `json:"delete"`
-	Admin  bool   `json:"admin"`
+	Key       string `json:"key" gorm:"type:CHAR(48);UNIQUE_INDEX;PRIMARY_KEY"`
+	Create    bool   `json:"create" gorm:"NOT_NULL;DEFAULT:true"`
+	Read      bool   `json:"read" gorm:"NOT_NULL;DEFAULT:true"`
+	Update    bool   `json:"update" gorm:"NOT_NULL;DEFAULT:true"`
+	Delete    bool   `json:"delete" gorm:"NOT_NULL;DEFAULT:true"`
+	Admin     bool   `json:"admin" gorm:"NOT_NULL;DEFAULT:false"`
+	SizeLimit int    `json:"sizeLimit" gorm:"NOT_NULL;DEFAULT:52428800"`
 }
 
 var db *gorm.DB

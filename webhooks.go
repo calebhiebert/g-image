@@ -68,12 +68,10 @@ func webhookPutInfo(entry *Entry) error {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-
-	println(string(body))
 
 	return nil
 }
@@ -99,12 +97,10 @@ func webhookDelete(id string) error {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-
-	println(string(body))
 
 	return nil
 }

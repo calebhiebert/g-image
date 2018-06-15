@@ -28,6 +28,11 @@ func putFile(c *gin.Context) {
 		return
 	}
 
+	if file.Size > int64(apiKey.(APIKey).SizeLimit) {
+		c.JSON(400, gin.H{"error": fmt.Sprintf("Size %d above limit %d", file.Size, apiKey.(APIKey).SizeLimit)})
+		return
+	}
+
 	id := xid.New().String()
 
 	hash, err := saveFile(file, id)
