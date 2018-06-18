@@ -50,8 +50,8 @@ func main() {
 
 	r.POST("/apikey", createAPIKey)
 
-	r.GET("/:id", getFile)
 	r.GET("/:id/info", getFileInfo)
+	r.GET("/:id", getFile)
 	r.POST("/upload", putFile)
 	r.DELETE("/:id", deleteFile)
 	r.Run()
