@@ -168,7 +168,7 @@ func downloadFile(id string) error {
 	return nil
 }
 
-func getObjectReader(id string) (io.ReadCloser, error) {
+func getObjectReader(id string) (*minio.Object, error) {
 	client, err := getMinioClient()
 	if err != nil {
 		return nil, err
