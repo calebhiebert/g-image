@@ -21,6 +21,8 @@ func getCacheContents() ([]os.FileInfo, error) {
 }
 
 func cacheCheck() {
+	ensureDirectory(config.DataDir)
+
 	files, err := getCacheContents()
 	if err != nil {
 		fmt.Println(err)

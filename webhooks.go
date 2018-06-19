@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func checkWebhookURL() bool {
+func isWebhookSet() bool {
 	return config.WebhookURL != ""
 }
 
@@ -19,7 +19,7 @@ func webhookGetInfo(id string) (Entry, error) {
 	}
 	var entry Entry
 
-	if !checkWebhookURL() {
+	if !isWebhookSet() {
 		return entry, errors.New("Missing webhook url")
 	}
 
@@ -48,7 +48,7 @@ func webhookGetInfo(id string) (Entry, error) {
 }
 
 func webhookPutInfo(entry *Entry) error {
-	if !checkWebhookURL() {
+	if !isWebhookSet() {
 		return errors.New("Missing webhook url")
 	}
 
@@ -77,7 +77,7 @@ func webhookPutInfo(entry *Entry) error {
 }
 
 func webhookDelete(id string) error {
-	if !checkWebhookURL() {
+	if !isWebhookSet() {
 		return errors.New("Missing webhook url")
 	}
 

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/caarlos0/env"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -38,6 +40,8 @@ func main() {
 
 	if config.CacheSize == 0 && !canUseS3() {
 		panic("Cache size cannot be set to 0 without S3")
+	} else if config.CacheSize > 0 && !canUseS3() {
+		fmt.Println("WARNING: Local cache without S3 is meant for development only. You will lose data if used in production")
 	}
 
 	err = setupDB()
@@ -59,4 +63,8 @@ func main() {
 	r.POST("/upload", putFile)
 	r.DELETE("/:id", deleteFile)
 	r.Run()
+}
+
+func canUseS3() bool {
+	return config.BucketName != "" && config.S3Secret != "" && config.S3AccessKey != ""
 }

@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
+
 	"github.com/minio/minio-go"
 
 	"github.com/gin-gonic/gin"
@@ -30,64 +32,62 @@ func (e HashMismatchError) Error() string {
 func getFile(c *gin.Context) {
 	apiKey, _ := c.Get("apikey")
 
-	if !apiKey.(APIKey).Read {
+	if apiKey == nil || !apiKey.(APIKey).Read {
 		c.JSON(401, gin.H{
 			"error": "Missing read permissions",
+			"code":  "PermError",
 		})
 		return
 	}
 
 	var data Entry
+	var err error
 	id := c.Param("id")
 
-	data, err := webhookGetInfo(id)
-	if err != nil {
-		fmt.Println(err)
+	if isWebhookSet() {
+		data, err = webhookGetInfo(id)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	if data.ID == "" {
 		data, err = readEntry(id)
 		if err != nil {
-			c.JSON(404, gin.H{
-				"error":    "not found",
-				"full_err": err,
-			})
+			if gorm.IsRecordNotFoundError(err) {
+				c.JSON(404, gin.H{
+					"error": "File not found in database",
+					"code":  "NotFound",
+				})
+			} else {
+				c.JSON(500, gin.H{
+					"error":    "Error while doing local db lookup",
+					"code":     "DbError",
+					"full_err": err,
+				})
+			}
 			return
 		}
 	}
 
-	if data.ID == "" {
-		c.JSON(404, gin.H{
-			"error": "not found",
-		})
-		return
-	}
+	fileExists := fileExists(config.DataDir + data.ID)
 
-	if config.CacheSize == 0 {
-		err = copyAndCacheResponseFromS3(c.Writer, &data)
+	if fileExists {
+		err := copyResponseFromCache(c.Writer, &data)
 		if err != nil {
-			handleRetrievalErr(err, c)
+			c.JSON(500, gin.H{
+				"error":    "error while reading file from cache",
+				"full_err": err,
+			})
 		}
 	} else {
-		fileExists := fileExists(config.DataDir + data.ID)
+		defer func() {
+			go cacheCheck()
+		}()
 
-		if fileExists {
-			err = copyResponseFromCache(c.Writer, &data)
-			if err != nil {
-				c.JSON(500, gin.H{
-					"error":    "error while reading file from cache",
-					"full_err": err,
-				})
-			}
-		} else {
-			defer func() {
-				go cacheCheck()
-			}()
-
-			err = copyAndCacheResponseFromS3(c.Writer, &data)
-			if err != nil {
-				handleRetrievalErr(err, c)
-			}
+		err := copyAndCacheResponseFromS3(c.Writer, &data)
+		if err != nil {
+			handleRetrievalErr(err, c)
 		}
 	}
 }
@@ -95,37 +95,42 @@ func getFile(c *gin.Context) {
 func getFileInfo(c *gin.Context) {
 	apiKey, _ := c.Get("apikey")
 
-	if !apiKey.(APIKey).Read {
+	if apiKey == nil || !apiKey.(APIKey).Read {
 		c.JSON(401, gin.H{
 			"error": "Missing read permissions",
+			"code":  "PermError",
 		})
 		return
 	}
 
 	var data Entry
+	var err error
 	id := c.Param("id")
 
-	data, err := webhookGetInfo(id)
-	if err != nil {
-		fmt.Println(err)
+	if isWebhookSet() {
+		data, err = webhookGetInfo(id)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	if data.ID == "" {
 		data, err = readEntry(id)
 		if err != nil {
-			c.JSON(404, gin.H{
-				"error":    "not found",
-				"full_err": err,
-			})
+			if gorm.IsRecordNotFoundError(err) {
+				c.JSON(404, gin.H{
+					"error": "File not found in database",
+					"code":  "NotFound",
+				})
+			} else {
+				c.JSON(500, gin.H{
+					"error":    "Error while doing local db lookup",
+					"code":     "DbError",
+					"full_err": err,
+				})
+			}
 			return
 		}
-	}
-
-	if data.ID == "" {
-		c.JSON(404, gin.H{
-			"error": "not found",
-		})
-		return
 	}
 
 	c.JSON(200, data)
@@ -280,8 +285,4 @@ func handleRetrievalErr(err error, c *gin.Context) {
 		})
 		break
 	}
-}
-
-func canUseS3() bool {
-	return config.BucketName != "" && config.S3Secret != "" && config.S3AccessKey != ""
 }

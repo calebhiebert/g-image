@@ -15,21 +15,29 @@ import (
 
 func putFile(c *gin.Context) {
 	apiKey, _ := c.Get("apikey")
-	if !apiKey.(APIKey).Create {
-		c.JSON(401, gin.H{"error": "Missing create permissions"})
+	if apiKey == nil || !apiKey.(APIKey).Create {
+		c.JSON(401, gin.H{
+			"error": "Missing create permissions",
+			"code":  "PermError",
+		})
 		return
 	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(500, gin.H{
-			"error": err,
+			"error":    err.Error(),
+			"code":     "FormParseError",
+			"full_err": err,
 		})
 		return
 	}
 
 	if file.Size > int64(apiKey.(APIKey).SizeLimit) {
-		c.JSON(400, gin.H{"error": fmt.Sprintf("Size %d above limit %d", file.Size, apiKey.(APIKey).SizeLimit)})
+		c.AbortWithStatusJSON(400, gin.H{
+			"error": fmt.Sprintf("Size %d above limit %d", file.Size, apiKey.(APIKey).SizeLimit),
+			"code":  "FileTooLarge",
+		})
 		return
 	}
 
@@ -51,7 +59,9 @@ func putFile(c *gin.Context) {
 		Sha256:   hash,
 	}
 
-	go doUpload(&fileInfo, file)
+	if canUseS3() {
+		go doUpload(&fileInfo, file)
+	}
 
 	err = writeEntry(fileInfo)
 	if err != nil {
@@ -61,9 +71,11 @@ func putFile(c *gin.Context) {
 		return
 	}
 
-	err = webhookPutInfo(&fileInfo)
-	if err != nil {
-		fmt.Println(err)
+	if isWebhookSet() {
+		err = webhookPutInfo(&fileInfo)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	c.JSON(200, fileInfo)
@@ -109,11 +121,11 @@ func ensureDirectory(path string) {
 }
 
 func doUpload(details *Entry, file *multipart.FileHeader) {
-	fmt.Printf("Staring file upload for %s\n", details.Filename)
+	fmt.Printf("Starting file upload for %s\n", details.Filename)
 
 	err := uploadFile(details, file)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Upload failed with error ", err)
 	}
 
 	fmt.Printf("Finished file upload for %s\n", details.Filename)
