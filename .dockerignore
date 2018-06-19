@@ -2,3 +2,7 @@ data
 vendor
 data.db
 g-file
+.env
+.gitignore
+Dockerfile
+README.MD
