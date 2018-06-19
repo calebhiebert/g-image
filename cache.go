@@ -32,10 +32,12 @@ func cacheCheck() {
 	var toDelete []string
 
 	for _, file := range files {
-		totalCacheSize += file.Size()
+		if file.Name() != "data.db" {
+			totalCacheSize += file.Size()
 
-		if totalCacheSize/1000000 > config.CacheSize {
-			toDelete = append(toDelete, file.Name())
+			if totalCacheSize/1000000 > config.CacheSize {
+				toDelete = append(toDelete, file.Name())
+			}
 		}
 	}
 

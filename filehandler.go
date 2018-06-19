@@ -51,6 +51,10 @@ func putFile(c *gin.Context) {
 		return
 	}
 
+	defer func() {
+		go cacheCheck()
+	}()
+
 	fileInfo := Entry{
 		ID:       id,
 		Filename: file.Filename,
