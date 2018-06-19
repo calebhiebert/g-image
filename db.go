@@ -39,7 +39,7 @@ var db *gorm.DB
 
 func setupDB() error {
 	var err error
-	db, err = gorm.Open("sqlite3", "data.db")
+	db, err = gorm.Open("sqlite3", config.DataDir+"data.db")
 	if err != nil {
 		return err
 	}

@@ -72,6 +72,45 @@ Deletes the file at `id`
 
 Returns a blank 200 upon success
 
+## Docker
+
+### Plain ol' Docker
+
+You can run a regular docker container with the following command
+
+```shell
+docker run -d \
+  -p 8080:8080 --name gfile \
+  -e BUCKET_NAME=example \
+  -e S3_ENDPOINT=s3.endpoint.here \
+  -e S3_ACCESS_KEY=<ACCESSKEY> \
+  -e S3_SECRET=<SECRET> \
+  -e WEBHOOK_URL=http://localhost:8008/hookr \
+  -v "$PWD/data":/data \
+  panchem/gfile
+```
+
+### Docker Compose
+
+Include gfile in your docker compose file like this:
+
+```yaml
+version: '3'
+services:
+  gfile:
+    image: panchem/gfile
+    ports:
+      - "8080:8080"
+    environment:
+      BUCKET_NAME: example
+      S3_ENDPOINT: s3.endpoint.here
+      S3_ACCESS_KEY: <ACCESSKEY>
+      S3_SECRET: <SECRET>
+      WEBHOOK_URL: http://localhost:8008/hookr
+    volumes:
+      - "$PWD/data:/data"
+```
+
 ## Webhooks
 
 GFile uses webhooks to allow users to store file data in a custom way on their own servers

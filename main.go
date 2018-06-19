@@ -44,6 +44,7 @@ func main() {
 		fmt.Println("WARNING: Local cache without S3 is meant for development only. You will lose data if used in production")
 	}
 
+	ensureDirectory(config.DataDir)
 	err = setupDB()
 	if err != nil {
 		panic(err)

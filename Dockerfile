@@ -10,8 +10,7 @@ RUN export GOOS=linux GOARCH=amd64 CGO_ENABLED=1 && go build -o gfile
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
-RUN mkdir /app
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 && mkdir /app
 COPY --from=build /src/app/gfile /app/gfile
-ENV GIN_MODE=release
+ENV GIN_MODE=release DATA_DIR=/data/
 CMD [ "/app/gfile" ]
