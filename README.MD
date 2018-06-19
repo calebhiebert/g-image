@@ -2,7 +2,10 @@
 
 A http file management utility
 
-- Store files on a S3 bucket (amazon, google, digitalocean, ovh, etc...)
+- Store files on a S3 bucket
+- **Tested Services**
+  - DigitalOcean Spaces
+  - Google Cloud Storage
 - Store files in a local cache on disk
 - Customizable cache size
 - Use webhooks for storage to any database or system

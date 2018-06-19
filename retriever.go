@@ -1,14 +1,31 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"reflect"
 	"strconv"
+
+	"github.com/minio/minio-go"
 
 	"github.com/gin-gonic/gin"
 )
+
+type HashMismatchError struct {
+	code     string
+	err      string
+	original string
+	current  string
+}
+
+func (e HashMismatchError) Error() string {
+	return e.err
+}
 
 func getFile(c *gin.Context) {
 	apiKey, _ := c.Get("apikey")
@@ -47,12 +64,9 @@ func getFile(c *gin.Context) {
 	}
 
 	if config.CacheSize == 0 {
-		err = copyResponseFromS3(c.Writer, &data)
+		err = copyAndCacheResponseFromS3(c.Writer, &data)
 		if err != nil {
-			c.JSON(500, gin.H{
-				"error":    "reading",
-				"full_err": err,
-			})
+			handleRetrievalErr(err, c)
 		}
 	} else {
 		fileExists := fileExists(config.DataDir + data.ID)
@@ -72,11 +86,7 @@ func getFile(c *gin.Context) {
 
 			err = copyAndCacheResponseFromS3(c.Writer, &data)
 			if err != nil {
-				c.JSON(500, gin.H{
-					"error":    "error while downloading and caching file",
-					"full_err": err,
-				})
-				return
+				handleRetrievalErr(err, c)
 			}
 		}
 	}
@@ -150,25 +160,6 @@ func writeHeaders(writer gin.ResponseWriter, data *Entry) {
 	writer.Header().Set("Content-Length", strconv.FormatInt(data.Size, 10))
 }
 
-func copyResponseFromS3(writer gin.ResponseWriter, data *Entry) error {
-	objectReader, err := getObjectReader(data.ID)
-	if err != nil {
-		return err
-	}
-
-	writer.Header().Set("X-Loaded-From", "S3")
-	writeHeaders(writer, data)
-
-	_, err = io.Copy(writer, objectReader)
-	if err != nil {
-		println(err)
-	}
-
-	objectReader.Close()
-
-	return nil
-}
-
 func copyResponseFromCache(writer gin.ResponseWriter, data *Entry) error {
 	fileReader, err := getObjectFile(data)
 	if err != nil {
@@ -198,13 +189,24 @@ func copyAndCacheResponseFromS3(writer gin.ResponseWriter, data *Entry) error {
 		return err
 	}
 
-	_, err = io.Copy(fileWriter, objectReader)
+	h := sha256.New()
+
+	_, err = io.Copy(fileWriter, io.TeeReader(objectReader, h))
 	if err != nil {
 		fileWriter.Close()
+		os.Remove(config.DataDir + data.ID)
 		return err
 	}
-
 	fileWriter.Close()
+
+	if hex.EncodeToString(h.Sum(nil)) != data.Sha256 {
+		return &HashMismatchError{
+			code:     "HashMismatch",
+			err:      "The file downloaded from S3 was different than the original",
+			original: data.Sha256,
+			current:  hex.EncodeToString(h.Sum(nil)),
+		}
+	}
 
 	fileReader, err := os.Open(config.DataDir + data.ID)
 	if err != nil {
@@ -212,6 +214,9 @@ func copyAndCacheResponseFromS3(writer gin.ResponseWriter, data *Entry) error {
 	}
 
 	defer fileReader.Close()
+	defer func() {
+		cacheCheck()
+	}()
 
 	writer.Header().Set("X-Loaded-From", "S3-cache")
 	writeHeaders(writer, data)
@@ -231,4 +236,52 @@ func fileExists(path string) bool {
 	}
 
 	return true
+}
+
+func handleRetrievalErr(err error, c *gin.Context) {
+	switch err.(type) {
+	case minio.ErrorResponse:
+		switch err.(minio.ErrorResponse).Code {
+		case "NoSuchBucket":
+			c.JSON(500, gin.H{
+				"error": fmt.Sprintf("A bucket with the name %s does not exist", config.BucketName),
+				"code":  "NoSuchBucket",
+			})
+			break
+		default:
+			c.JSON(500, gin.H{
+				"error": "S3 Error",
+				"code":  err.(minio.ErrorResponse).Code,
+			})
+			break
+		}
+		break
+	case *url.Error:
+		fmt.Println("Url error type", reflect.TypeOf(err.(*url.Error).Err))
+		c.JSON(500, gin.H{
+			"error": err.(*url.Error).Error(),
+			"code":  "CONNECTION_ERROR",
+		})
+		break
+	case *HashMismatchError:
+		c.JSON(500, gin.H{
+			"code":     err.(*HashMismatchError).code,
+			"original": err.(*HashMismatchError).original,
+			"current":  err.(*HashMismatchError).current,
+			"error":    err.Error(),
+		})
+		break
+	default:
+		fmt.Println("Error while getting file from bucket", reflect.TypeOf(err), err)
+		c.JSON(500, gin.H{
+			"error":    "error while downloading and caching file",
+			"full_err": err,
+			"code":     "GENERIC_ERR",
+		})
+		break
+	}
+}
+
+func canUseS3() bool {
+	return config.BucketName != "" && config.S3Secret != "" && config.S3AccessKey != ""
 }

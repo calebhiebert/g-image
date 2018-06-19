@@ -36,6 +36,10 @@ func main() {
 		panic(err)
 	}
 
+	if config.CacheSize == 0 && !canUseS3() {
+		panic("Cache size cannot be set to 0 without S3")
+	}
+
 	err = setupDB()
 	if err != nil {
 		panic(err)
