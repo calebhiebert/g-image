@@ -6,4 +6,8 @@ pipeline:
     secrets: [docker_username, docker_password]
   telegram:
     image: appleboy/drone-telegram
-    secrets: [token, to]
+    secrets:
+      - source: telegram_token
+        target: token
+      - source: telegram_to
+        target: to
