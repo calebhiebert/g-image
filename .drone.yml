@@ -1,9 +1,9 @@
 pipeline:
-  notify:
-    image: appleboy/drone-telegram
-    secrets: [telegram_token, telegram_to]
   docker:
     image: plugins/docker
     repo: panchem/gfile
     tags: latest
     secrets: [docker_username, docker_password]
+  notify:
+    image: appleboy/drone-telegram
+    secrets: [telegram_token, telegram_to]
