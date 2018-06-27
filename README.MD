@@ -161,7 +161,7 @@ The webhook expects an `application/json` response in the format of:
 }
 ```
 
-#### Delete File
+#### Delete File 
 
 Webhook will send a DELETE request. This request will contain a query parameter `id`, which is the id of the file to delete
 
