@@ -1,7 +1,8 @@
 pipeline:
   notify:
-    image: appleboy/drone-telegram
-    secrets: [notify_to, notify_token]
+    image: drillster/drone-email
+    recipients_only: true
+    secrets: [host, username, password, from, recipients]
   docker:
     image: plugins/docker
     repo: panchem/gfile
