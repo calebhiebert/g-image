@@ -1,8 +1,8 @@
 pipeline:
   notify:
     image: drillster/drone-email
-    recipients_only: true 
-    secrets: [host, username, password, from, recipients]
+    from: drone@masterofcode.com
+    secrets: [email_host, email_username, email_password, email_recipients]
   docker:
     image: plugins/docker
     repo: panchem/gfile
