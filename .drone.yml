@@ -1,8 +1,7 @@
 pipeline:
   notify:
-    image: drillster/drone-email
-    from: drone@masterofcode.com
-    secrets: [email_host, email_username, email_password, email_recipients]
+    image: appleboy/drone-telegram
+    secrets: [telegram_token, telegram_to]
   docker:
     image: plugins/docker
     repo: panchem/gfile
