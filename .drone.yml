@@ -1,7 +1,7 @@
 pipeline:
   notify:
     image: drillster/drone-email
-    recipients_only: true
+    recipients_only: true 
     secrets: [host, username, password, from, recipients]
   docker:
     image: plugins/docker
