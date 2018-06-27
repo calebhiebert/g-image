@@ -8,6 +8,7 @@ A http file management utility
   - Google Cloud Storage
 - Store files in a local cache on disk
 - Customizable cache size
+- CI
 - Use webhooks for storage to any database or system
 - API key generation with variable permissions (Create, Read, Delete, Admin)
 
