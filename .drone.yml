@@ -4,3 +4,6 @@ pipeline:
     repo: panchem/gfile
     tags: latest
     secrets: [docker_username, docker_password]
+  telegram:
+    image: appleboy/drone-telegram
+    secrets: [token, to]
