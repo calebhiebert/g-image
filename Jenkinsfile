@@ -1,14 +1,13 @@
 pipeline {
-  agent {
-    dockerfile {
-      filename 'Dockerfile'
-    }
+  agent any
 
-  }
   stages {
-    stage('Build Dockerfile') {
-      steps {
-        echo 'Building Dockerfile'
+    stage('Build Image') {
+      agent {
+        dockerfile {
+          filename 'Dockerfile'
+          additionalBuildArgs '-t panchem/gfile'
+        }
       }
     }
   }
