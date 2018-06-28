@@ -11,7 +11,14 @@ pipeline {
       }
 
       steps {
-        echo 'Build Dockerfile'
+        echo 'Build Complete'
+      }
+    }
+
+    stage('Push Image') {
+      withCredentials([usernamePassword(credentialsId: 'docker-hub-login', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+        sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+        sh "docker push panchem/gfile"
       }
     }
   }
