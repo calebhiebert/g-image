@@ -16,9 +16,11 @@ pipeline {
     }
 
     stage('Push Image') {
-      withCredentials([usernamePassword(credentialsId: 'docker-hub-login', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-        sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
-        sh "docker push panchem/gfile"
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-login', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+          sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+          sh "docker push panchem/gfile"
+        }
       }
     }
   }
