@@ -9,6 +9,10 @@ pipeline {
           additionalBuildArgs '-t panchem/gfile'
         }
       }
+
+      steps {
+        echo 'Build Dockerfile'
+      }
     }
   }
 }
